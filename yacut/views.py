@@ -21,32 +21,33 @@ def get_unique_short_id():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     form = URLMapForm()
-    if form.validate_on_submit():
+    if not form.validate_on_submit():
+        return render_template('yacut.html', form=form)
 
-        original_link = form.original_link.data
-        custom_id = form.custom_id.data
+    original_link = form.original_link.data
+    custom_id = form.custom_id.data
 
-        if URLMap.query.filter_by(short=custom_id).first() is not None:
-            flash(f'Имя {custom_id} уже занято!')
+    if URLMap.query.filter_by(short=custom_id).first() is not None:
+        flash(f'Имя {custom_id} уже занято!', 'warning')
 
-        if not custom_id:
-            custom_id = get_unique_short_id()
+    if not custom_id:
+        custom_id = get_unique_short_id()
 
-        if URLMap.query.filter_by(original=original_link).first() is None:
+    if URLMap.query.filter_by(original=original_link).first() is None:
 
-            urlmap = URLMap(
-                original=original_link,
-                short=custom_id
-            )
-            db.session.add(urlmap)
-            db.session.commit()
+        urlmap = URLMap(
+            original=original_link,
+            short=custom_id
+        )
+        db.session.add(urlmap)
+        db.session.commit()
 
-        last_url = URLMap.query.filter_by(original=original_link).first()
-        original_url = urljoin(request.url, last_url.short)
-        message = Markup(f'Ваша ссылка: <a href="{original_url}"'
-                         f'target="_blank">{original_url}</a>')
-        flash(message, 'info')
-    return render_template('index.html', form=form)
+    last_url = URLMap.query.filter_by(original=original_link).first()
+    original_url = urljoin(request.url, last_url.short)
+    message = Markup(f'Ваша ссылка: <a href="{original_url}"'
+                     f'target="_blank">{original_url}</a>')
+    flash(message, 'info')
+    return render_template('yacut.html', form=form)
 
 
 @app.route('/<string:id>')
